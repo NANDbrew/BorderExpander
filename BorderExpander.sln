@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BorderExpander", "BorderExpander.csproj", "{9993A893-F261-4A71-B620-0C5904EBACED}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9993A893-F261-4A71-B620-0C5904EBACED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9993A893-F261-4A71-B620-0C5904EBACED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9993A893-F261-4A71-B620-0C5904EBACED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9993A893-F261-4A71-B620-0C5904EBACED}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8030653F-E097-465D-8355-66835F07D786}
+	EndGlobalSection
+EndGlobal
