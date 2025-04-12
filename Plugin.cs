@@ -14,7 +14,7 @@ namespace BorderExpander
     {
         public const string PLUGIN_ID = "com.nandbrew.borderexpander";
         public const string PLUGIN_NAME = "Border Expander";
-        public const string PLUGIN_VERSION = "0.2.1";
+        public const string PLUGIN_VERSION = "0.2.2";
 
         public static float northLimit = 46f;
         public static float southLimit = 26f;
@@ -27,6 +27,7 @@ namespace BorderExpander
         internal static ConfigEntry<bool> freeSail;
         internal static ConfigEntry<bool> sunPatch;
         internal static ConfigEntry<bool> sunCompassPatch;
+        internal static ConfigEntry<bool> debugFreeSail;
 
         private void Awake()
         {
@@ -35,6 +36,8 @@ namespace BorderExpander
             freeSail = Config.Bind("Settings", "Free Sailing", false, new ConfigDescription("Allow sailing anywhere between 70°N and 70°S (allows east/west circumnavigation)"));
             sunPatch = Config.Bind("Settings", "Sun Patch", true, new ConfigDescription("Adjust the sun's behavior around sunrise and sunset. will make sunrise a bit earlier at Aestrin and a bit later at FFL"));
             sunCompassPatch = Config.Bind("Settings", "Sun Compass Patch", false, new ConfigDescription("sun compass requires manual alignment, so it works south of the equator (requires a restart to take effect)"));
+
+            debugFreeSail = Config.Bind("zDebug", "Debug Free Sailing", false, new ConfigDescription("bypass all limits", null, new ConfigurationManagerAttributes { IsAdvanced = true }));
 
             freeSail.SettingChanged += (sender, args) => UpdateLimits();
 

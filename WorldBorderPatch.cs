@@ -19,6 +19,8 @@ namespace BorderExpander
             bool isOutOfBounds = false;
             if (!Plugin.initialized) return false;
             if (!GameState.playing || GameState.recovering) return false;
+            if (Plugin.debugFreeSail.Value) return false;
+
             ___currentGlobePos = FloatingOriginManager.instance.GetGlobeCoords(__instance.transform);
 
             #region soft limits
