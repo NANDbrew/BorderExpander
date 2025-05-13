@@ -6,24 +6,49 @@ using System.Threading.Tasks;
 using HarmonyLib;
 using UnityEngine;
 
-namespace AroundTheWorld
+namespace BorderExpander
 {
-    /*[HarmonyPatch(typeof(FloatingOriginManager), "Start")]
-    internal class WindPatch
+    [HarmonyPatch(typeof(Wind))]
+    public static class WindPatch
     {
-        public static void Postfix()
+        internal static float defaultTradeWindInfluence;
+        public static List<TradeWindRegion> tradeWindRegions = new List<TradeWindRegion>();
+
+        [HarmonyPatch("Start")]
+        [HarmonyPostfix]
+        private static void StartPatch(float ___tradeWindInfluence)
         {
-            Vector3 globeOffset = (Vector3)Traverse.Create(FloatingOriginManager.instance).Field("globeOffset").GetValue();
-
-            var obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            obj.transform.parent = Refs.shiftingWorld.transform;
-            obj.name = "Polar cap";
-            obj.tag = "Terrain";
-            obj.transform.localScale = new Vector3(100000f, 100f, 100000f);
-            Vector3 targetPos = new Vector3(0f, 0f, 80f) * 9000 + globeOffset + new Vector3(0f, -30f, 0f);
-            obj.transform.position = FloatingOriginManager.instance.RealPosToShiftingPos(targetPos);
-
-            //var comp = obj.AddComponent<IslandHorizon>();
+            defaultTradeWindInfluence = ___tradeWindInfluence;
         }
-    }*/
+
+        [HarmonyPatch("GetCurrentTradeWind")]
+        [HarmonyPrefix]
+        public static bool GetTradeWindPatch(ref Vector3 __result, ref float ___tradeWindInfluence)
+        {
+            float longitude = FloatingOriginManager.instance.GetGlobeCoords(Refs.observerMirror.transform).x;
+            float latitude = FloatingOriginManager.instance.GetGlobeCoords(Refs.observerMirror.transform).z;
+
+            foreach (var region in tradeWindRegions)
+            {
+                if (longitude > region.westBorder && longitude < region.eastBorder && latitude > region.southBorder && latitude < region.northBorder)
+                {
+                    ___tradeWindInfluence = region.influence;
+                    __result = region.direction.normalized;
+                    return false;
+                }
+            }
+            ___tradeWindInfluence = defaultTradeWindInfluence;
+            return true;
+        }
+    }
+
+    public class TradeWindRegion
+    {
+        public float northBorder = 0f;
+        public float southBorder = 0f;
+        public float eastBorder = 0f;
+        public float westBorder = 0f;
+        public Vector3 direction = Vector3.zero;
+        public float influence = 0.25f;
+    }
 }
