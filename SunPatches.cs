@@ -15,6 +15,11 @@ namespace BorderExpander
         const float dayMult = 1f / 40f;
         const float offset = 6.2f;
         static bool isReset = false;
+
+        //static float defaultDawnBorder;
+        static float defaultSunriseStart;
+        static float defaultDayBorder;
+
         [HarmonyPatch("Update")]
         [HarmonyPrefix]
         internal static void SunPatch()
@@ -28,11 +33,19 @@ namespace BorderExpander
             }
             else if (!isReset)
             {
-                Sun.sun.dawnBorder = 6.6f;
-                Sun.sun.sunriseStart = 4.44f;
-                Sun.sun.dayBorder = 8;
+                //Sun.sun.dawnBorder = defaultDawnBorder;
+                Sun.sun.sunriseStart = defaultSunriseStart;
+                Sun.sun.dayBorder = defaultDayBorder;
                 isReset = true;
             }
+        }
+        [HarmonyPatch("Start")]
+        [HarmonyPostfix]
+        internal static void StartPatch()
+        {
+            //defaultDawnBorder = Sun.sun.dawnBorder;
+            defaultSunriseStart = Sun.sun.sunriseStart;
+            defaultDayBorder = Sun.sun.dayBorder;
         }
     }
 }
