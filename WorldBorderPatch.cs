@@ -98,13 +98,6 @@ namespace BorderExpander
             return false;
         }
 
-        public static void ApplyLimit(Vector3 dir)
-        {
-            Rigidbody body = GameState.lastBoat.GetComponent<Rigidbody>();
-            body.AddForceAtPosition(dir, body.transform.forward * 10);
-            //body.AddRelativeTorque(Vector3.right);
-        }
-
         public static IEnumerator MoveBoatToPos(Transform boat, Vector3 targetPos)
         {
             GameState.recovering = true;
