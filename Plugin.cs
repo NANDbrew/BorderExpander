@@ -9,12 +9,11 @@ using UnityEngine;
 namespace BorderExpander
 {
     [BepInPlugin(PLUGIN_ID, PLUGIN_NAME, PLUGIN_VERSION)]
-    //[BepInDependency("com.app24.sailwindmoddinghelper", "2.0.3")]
     public class Plugin : BaseUnityPlugin
     {
         public const string PLUGIN_ID = "com.nandbrew.borderexpander";
         public const string PLUGIN_NAME = "Border Expander";
-        public const string PLUGIN_VERSION = "0.2.2";
+        public const string PLUGIN_VERSION = "0.3.0";
 
         public static float northLimit = 46f;
         public static float southLimit = 26f;
