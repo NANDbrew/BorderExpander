@@ -86,7 +86,8 @@
   <ItemGroup>
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="SunCompassPatch.cs" />
-    <Compile Include="SunPatches.cs" />
+    <Compile Include="SunPatch.cs" />
+    <Compile Include="TradeWinds.cs" />
     <Compile Include="WindPatch.cs" />
     <Compile Include="WorldBorderPatch.cs" />
     <Compile Include="Plugin.cs" />

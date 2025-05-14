@@ -82,7 +82,7 @@ namespace BorderExpander
                 Recovery.RecoverPlayer(RecoveryReason.worldBorder);
             }
             #endregion
-            // circumnavigation
+            #region circumnavigation
             if (GameState.justWokeUp && (___currentGlobePos.x > 180 || ___currentGlobePos.x < -180))
             {
                 Debug.Log("Transposing Boat");
@@ -94,7 +94,7 @@ namespace BorderExpander
                 Vector3 targetPos = new Vector3(transpose, currentPos.y, currentPos.z);
                 __instance.StartCoroutine(MoveBoatToPos(GameState.lastBoat, targetPos));
             }
-
+            #endregion
             return false;
         }
 
