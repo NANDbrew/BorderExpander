@@ -85,6 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigurationManagerAttributes.cs" />
+    <Compile Include="RegionBlenderPatch.cs" />
     <Compile Include="SunCompassPatch.cs" />
     <Compile Include="SunPatch.cs" />
     <Compile Include="TradeWinds.cs" />
