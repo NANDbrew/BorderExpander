@@ -1,9 +1,6 @@
 ﻿using HarmonyLib;
-using System.Collections.Generic;
-using System.Globalization;
+using System.Collections;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using UnityEngine;
 
 namespace BorderExpander
@@ -11,35 +8,43 @@ namespace BorderExpander
     [HarmonyPatch(typeof(RegionBlender))]
     internal class RegionBlenderPatch
     {
-        const float northLat = 40;
-        const float midLat = 30;
-        const float eqLat = 0;
+        static readonly float[] lats = { 0, 20, 50 };
+        static readonly string[] latNames = { "Region Equatorial", "Region Mid Latitude", "Region Northern" };
 
         public static bool regionByLat = false;
         public static bool switchingToLat = false;
         internal static float enterDist = 0;
         internal static float exitDist = 0;
         internal static Region lastRegion = null;
-        public static Dictionary<float, Region> latitudeRegions;
+        internal static Region lastBlend = null;
+        public static RegionAddon[] latitudeRegions;
         public static float blendDist;
+        private static float lerp;
 
         [HarmonyPatch("Start")]
         [HarmonyPostfix]
         public static void StartPatch()
         {
-            latitudeRegions = new Dictionary<float, Region>
+            lastBlend = new GameObject("Region blend cache").AddComponent<Region>();
+            lastBlend.clearWeather = lastBlend.gameObject.AddComponent<WeatherSet>();
+            lastBlend.cloudyWeather = lastBlend.gameObject.AddComponent<WeatherSet>();
+            lastBlend.stormWeather = lastBlend.gameObject.AddComponent<WeatherSet>();
+            lastBlend.rainWeather = lastBlend.gameObject.AddComponent<WeatherSet>();
+            CopyRegionDetails(RegionBlender.instance.initialRegion, lastBlend);
+            
+            latitudeRegions = new RegionAddon[lats.Length];
+            for (int i = 0; i < latitudeRegions.Length; i++)
             {
-                { eqLat, new GameObject("Region Equatorial").AddComponent<Region>() },
-                { midLat, new GameObject("Region Mid lat").AddComponent<Region>() },
-                { northLat, new GameObject("Region Northern").AddComponent<Region>() }
-            };
-            latitudeRegions[eqLat].gameObject.AddComponent<RegionAddon>().latitude = eqLat;
-            latitudeRegions[midLat].gameObject.AddComponent<RegionAddon>().latitude = midLat;
-            latitudeRegions[northLat].gameObject.AddComponent<RegionAddon>().latitude = northLat;
-            foreach (var region in latitudeRegions.Values)
-            {
+                var region = new GameObject(latNames[i]).AddComponent<Region>();
                 region.portRegion = PortRegion.none;
-                //CopyWeatherSets(RegionBlender.instance.initialRegion, region);
+                region.clearWeather = region.gameObject.AddComponent<WeatherSet>();
+                region.cloudyWeather = region.gameObject.AddComponent<WeatherSet>();
+                region.stormWeather = region.gameObject.AddComponent<WeatherSet>();
+                region.rainWeather = region.gameObject.AddComponent<WeatherSet>();
+                var addon = region.gameObject.AddComponent<RegionAddon>();
+                addon.latitude = lats[i];
+                addon.blendDist = 3000;
+                latitudeRegions[i] = addon;
             }
             foreach (var region in GameObject.FindObjectsOfType<Region>())
             {
@@ -47,31 +52,34 @@ namespace BorderExpander
                 Debug.Log("did we add addon?");
                 if (region.portRegion == PortRegion.alankh)
                 {
-                    CopyWeatherSets(region, latitudeRegions[midLat]);
+                    // using al'ankh for both equatorial and mid. need a special one for equatorial someday
+                    CopyRegionDetails(region, latitudeRegions[1].region);
+                    CopyRegionDetails(region, latitudeRegions[0].region);
                 }
                 else if (region.portRegion == PortRegion.medi && region.gameObject.name.Contains("East"))
                 {
-                    region.GetComponent<RegionAddon>().blendDist = 4000;
-                    CopyWeatherSets(region, latitudeRegions[northLat]);
+                    region.GetComponent<RegionAddon>().blendDist = 2500;
+                    // using chronos for higher latitudes
+                    CopyRegionDetails(region, latitudeRegions[2].region);
                 }
                 else if (region.portRegion == PortRegion.emerald && region.gameObject.name.Contains("Lagoon"))
                 {
                     region.GetComponent<RegionAddon>().blendDist = 1000;
-                    CopyWeatherSets(region, latitudeRegions[eqLat]);
+                    //CopyRegionDetails(region, latitudeRegions[0].region);
                 }
             }
         }
 
-        public static void CopyWeatherSets(Region initialRegion, Region targetRegion)
+        public static void CopyRegionDetails(Region initialRegion, Region targetRegion)
         {
-            targetRegion.clearWeather = new WeatherSet();
-            targetRegion.cloudyWeather = new WeatherSet();
-            targetRegion.rainWeather = new WeatherSet();
-            targetRegion.stormWeather = new WeatherSet();
             WeatherSet.CopyFrom(ref targetRegion.clearWeather, initialRegion.clearWeather, instantiateMaterials: true);
             WeatherSet.CopyFrom(ref targetRegion.cloudyWeather, initialRegion.cloudyWeather, instantiateMaterials: true);
             WeatherSet.CopyFrom(ref targetRegion.rainWeather, initialRegion.rainWeather, instantiateMaterials: true);
             WeatherSet.CopyFrom(ref targetRegion.stormWeather, initialRegion.stormWeather, instantiateMaterials: true);
+            targetRegion.stormRange = initialRegion.stormRange;
+            targetRegion.windChaos = initialRegion.windChaos;
+            targetRegion.windDirChaos = initialRegion.windDirChaos;
+            targetRegion.stormCount = initialRegion.stormCount;
         }
 
         [HarmonyPatch("Update")]
@@ -93,6 +101,18 @@ namespace BorderExpander
         [HarmonyPrefix]
         public static bool BlendPatch(Transform ___player, Region ___currentTargetRegion, ref Region ___blendedRegion)
         {
+/*            if (GameState.justStarted && !initialized)
+            {
+                RegionBlender.instance.StartCoroutine(WaitForBlend());
+                initialized = true;
+            }*/
+            if (GameState.justStarted || GameState.currentlyLoading)
+            {
+                CopyRegionDetails(___blendedRegion, lastBlend);
+                //initialBlend = true;
+                return true;
+            }
+
             float num;
             float value;
             if (regionByLat)
@@ -100,71 +120,87 @@ namespace BorderExpander
                 //float num;
                 if (switchingToLat)
                 {
-                    value = Vector3.Distance(___player.position, lastRegion.transform.position);
-                    num = Mathf.InverseLerp(exitDist, exitDist + blendDist, value);
-                    if (num > 0.999f) switchingToLat = false;
+                    value = Vector3.Distance(___player.position, lastRegion.GetComponent<Collider>().ClosestPoint(___player.transform.position));
+                    //value = Vector3.Distance(___player.position, lastRegion.transform.position);
+                    num = Mathf.InverseLerp(0, blendDist, value);
+                    if (num > 0.99f) switchingToLat = false;
                 }
                 else
                 {
                     value = Mathf.Abs(Mathf.Abs(___currentTargetRegion.GetComponent<RegionAddon>().latitude - FloatingOriginManager.instance.GetGlobeCoords(___player).z));
                     num = Mathf.InverseLerp(10, 9.5f, value);
                 }
-                WeatherSet.BlendSets(ref ___blendedRegion.clearWeather, lastRegion.clearWeather, ___currentTargetRegion.clearWeather, num);
-                WeatherSet.BlendSets(ref ___blendedRegion.cloudyWeather, lastRegion.cloudyWeather, ___currentTargetRegion.cloudyWeather, num);
-                WeatherSet.BlendSets(ref ___blendedRegion.rainWeather, lastRegion.rainWeather, ___currentTargetRegion.rainWeather, num);
-                WeatherSet.BlendSets(ref ___blendedRegion.stormWeather, lastRegion.stormWeather, ___currentTargetRegion.stormWeather, num);
-                ___blendedRegion.stormRange = Mathf.Lerp(___blendedRegion.stormRange, ___currentTargetRegion.stormRange, num);
-                ___blendedRegion.windChaos = Mathf.Lerp(___blendedRegion.windChaos, ___currentTargetRegion.windChaos, num);
-                ___blendedRegion.windDirChaos = Mathf.Lerp(___blendedRegion.windDirChaos, ___currentTargetRegion.windDirChaos, num);
-                ___blendedRegion.stormCount = Mathf.RoundToInt(Mathf.Lerp(___blendedRegion.stormCount, ___currentTargetRegion.stormCount, num));
                 //Debug.Log(num);
-                return false;
+                //return false;
             }
-            switchingToLat = false;
-            value = Vector3.Distance(___player.position, ___currentTargetRegion.transform.position);
-            num = Mathf.InverseLerp(enterDist, enterDist - blendDist, value);
-            WeatherSet.BlendSets(ref ___blendedRegion.clearWeather, ___blendedRegion.clearWeather, ___currentTargetRegion.clearWeather, num);
-            WeatherSet.BlendSets(ref ___blendedRegion.cloudyWeather, ___blendedRegion.cloudyWeather, ___currentTargetRegion.cloudyWeather, num);
-            WeatherSet.BlendSets(ref ___blendedRegion.rainWeather, ___blendedRegion.rainWeather, ___currentTargetRegion.rainWeather, num);
-            WeatherSet.BlendSets(ref ___blendedRegion.stormWeather, ___blendedRegion.stormWeather, ___currentTargetRegion.stormWeather, num);
-            ___blendedRegion.stormRange = Mathf.Lerp(___blendedRegion.stormRange, ___currentTargetRegion.stormRange, num);
-            ___blendedRegion.windChaos = Mathf.Lerp(___blendedRegion.windChaos, ___currentTargetRegion.windChaos, num);
-            ___blendedRegion.windDirChaos = Mathf.Lerp(___blendedRegion.windDirChaos, ___currentTargetRegion.windDirChaos, num);
-            ___blendedRegion.stormCount = Mathf.RoundToInt(Mathf.Lerp(___blendedRegion.stormCount, ___currentTargetRegion.stormCount, num));
-
+            else
+            {
+                // crazy bs to make collider distance work from inside. Why can't my distance function be signed?
+                Physics.ComputePenetration(___player.GetComponent<Collider>(), ___player.position, ___player.rotation, ___currentTargetRegion.GetComponent<Collider>(), ___currentTargetRegion.transform.position, ___currentTargetRegion.transform.rotation, out Vector3 dir, out value);
+                switchingToLat = false;
+                //value = Vector3.Distance(___player.position, ___currentTargetRegion.transform.position);
+                //value = Vector3.Distance(___player.position, ___currentTargetRegion.GetComponent<Collider>().ClosestPoint(___player.transform.position));
+                num = Mathf.InverseLerp(0, blendDist, value);
+            }
+            if (num > 0.99f) CopyRegionDetails(___blendedRegion, lastBlend);
+            WeatherSet.BlendSets(ref ___blendedRegion.clearWeather, lastBlend.clearWeather, ___currentTargetRegion.clearWeather, num);
+            WeatherSet.BlendSets(ref ___blendedRegion.cloudyWeather, lastBlend.cloudyWeather, ___currentTargetRegion.cloudyWeather, num);
+            WeatherSet.BlendSets(ref ___blendedRegion.rainWeather, lastBlend.rainWeather, ___currentTargetRegion.rainWeather, num);
+            WeatherSet.BlendSets(ref ___blendedRegion.stormWeather, lastBlend.stormWeather, ___currentTargetRegion.stormWeather, num);
+            ___blendedRegion.stormRange = Mathf.Lerp(lastBlend.stormRange, ___currentTargetRegion.stormRange, num);
+            ___blendedRegion.windChaos = Mathf.Lerp(lastBlend.windChaos, ___currentTargetRegion.windChaos, num);
+            ___blendedRegion.windDirChaos = Mathf.Lerp(lastBlend.windDirChaos, ___currentTargetRegion.windDirChaos, num);
+            ___blendedRegion.stormCount = Mathf.RoundToInt(Mathf.Lerp(lastBlend.stormCount, ___currentTargetRegion.stormCount, num));
+            lerp = num;
             //Debug.Log(num);
-
             return false;
         }
         [HarmonyPatch("SwitchRegion")]
         [HarmonyPrefix]
-        public static void SwitchRegionPrefix(Region newRegion, Transform ___player, Region ___currentTargetRegion)
+        public static void SwitchRegionPrefix(Region newRegion, Transform ___player, Region ___currentTargetRegion, Region ___blendedRegion)
         {
             lastRegion = ___currentTargetRegion;
-            enterDist = Vector3.Distance(___player.position, newRegion.transform.position);
+            //exitDist = Vector3.Distance(___player.position, lastRegion.transform.position);
+            //enterDist = Vector3.Distance(___player.position, newRegion.transform.position);
             blendDist = newRegion.GetComponent<RegionAddon>().blendDist;
+#if DEBUG
             Hints.instance.ShowExternalHint($"Entering {newRegion.gameObject.name} from {lastRegion.gameObject.name}");
-
+#endif
+            if (GameState.justStarted)
+            {
+                CopyRegionDetails(newRegion, lastBlend);
+                lastBlend.portRegion = newRegion.portRegion;
+            }
+            else
+            {
+                CopyRegionDetails(___blendedRegion, lastBlend);
+                lastBlend.portRegion = ___blendedRegion.portRegion;
+            }
         }
 
         public static Region GetLatitudeRegion(Transform player)
         {
             float lat = FloatingOriginManager.instance.GetGlobeCoords(player).z;
-            Region closest = latitudeRegions.FirstOrDefault().Value;
+            var closest = latitudeRegions.FirstOrDefault();
             float diff = 99;
-            foreach (float key in latitudeRegions.Keys)
+            foreach (var regAdd in latitudeRegions)
             {
-                float curDiff = Mathf.Abs(key - lat);
+                float curDiff = Mathf.Abs(regAdd.latitude - lat);
                 if (curDiff < diff)
                 {
-                    closest = latitudeRegions[key];
+                    closest = regAdd;
                     diff = curDiff;
                 }
             }
-            return closest;
+            return closest.region;
+        }
+
+        public static IEnumerator WaitForBlend()
+        {
+            yield return new WaitForSeconds(4);
+
         }
     }
-
 
     public class RegionAddon : MonoBehaviour
     {
@@ -191,8 +227,7 @@ namespace BorderExpander
             {
                 RegionBlenderPatch.switchingToLat = true;
                 RegionBlenderPatch.regionByLat = true;
-                RegionBlenderPatch.exitDist = Vector3.Distance(other.transform.position, region.transform.position);
-                RegionBlenderPatch.lastRegion = region;
+                //RegionBlenderPatch.lastRegion = region;
                 RegionBlender.instance.SwitchRegion(RegionBlenderPatch.GetLatitudeRegion(other.transform));
             }
         }

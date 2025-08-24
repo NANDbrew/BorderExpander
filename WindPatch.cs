@@ -45,10 +45,11 @@ namespace BorderExpander
         static TradeWindRegion southernWesterlies = new TradeWindRegion
         {
             name = "southern westerlies",
-            limits = Rect.MinMaxRect(-200, -90, 200, -33),
+            limits = Rect.MinMaxRect(-200, -60, 200, -33),
             direction = new Vector3(1f, 0f, -0.5f),
             influence = 0.25f
         };
+
         [HarmonyPatch("Awake")]
         [HarmonyPostfix]
         public static void AwakePatch(Wind __instance, float ___tradeWindInfluence, float ___minimumMagnitude)
