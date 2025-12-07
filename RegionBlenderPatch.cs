@@ -15,10 +15,10 @@ namespace BorderExpander
         public static bool switchingToLat = false;
         internal static float enterDist = 0;
         internal static float exitDist = 0;
-        internal static Region lastRegion = null;
+        internal static RegionAddon lastRegion = null;
         internal static Region lastBlend = null;
         public static RegionAddon[] latitudeRegions;
-        public static float blendDist;
+        public static RegionAddon targetReg;
         private static float lerp;
 
         [HarmonyPatch("Start")]
@@ -118,15 +118,16 @@ namespace BorderExpander
             if (regionByLat)
             {
                 //float num;
-                if (switchingToLat)
+                if (switchingToLat && lastRegion.collider != null)
                 {
-                    value = Vector3.Distance(___player.position, lastRegion.GetComponent<Collider>().ClosestPoint(___player.transform.position));
-                    //value = Vector3.Distance(___player.position, lastRegion.transform.position);
-                    num = Mathf.InverseLerp(0, blendDist, value);
+
+                    value = Vector3.Distance(___player.position, lastRegion.collider.ClosestPoint(___player.transform.position));
+                    num = Mathf.InverseLerp(0, targetReg.blendDist, value);
                     if (num > 0.99f) switchingToLat = false;
                 }
                 else
                 {
+                    switchingToLat = false;
                     value = Mathf.Abs(Mathf.Abs(___currentTargetRegion.GetComponent<RegionAddon>().latitude - FloatingOriginManager.instance.GetGlobeCoords(___player).z));
                     num = Mathf.InverseLerp(10, 9.5f, value);
                 }
@@ -136,13 +137,16 @@ namespace BorderExpander
             else
             {
                 // crazy bs to make collider distance work from inside. Why can't my distance function be signed?
-                Physics.ComputePenetration(___player.GetComponent<Collider>(), ___player.position, ___player.rotation, ___currentTargetRegion.GetComponent<Collider>(), ___currentTargetRegion.transform.position, ___currentTargetRegion.transform.rotation, out Vector3 dir, out value);
+                Physics.ComputePenetration(___player.GetComponent<Collider>(), ___player.position, ___player.rotation, targetReg.GetComponent<Collider>(), ___currentTargetRegion.transform.position, ___currentTargetRegion.transform.rotation, out Vector3 dir, out value);
                 switchingToLat = false;
                 //value = Vector3.Distance(___player.position, ___currentTargetRegion.transform.position);
                 //value = Vector3.Distance(___player.position, ___currentTargetRegion.GetComponent<Collider>().ClosestPoint(___player.transform.position));
-                num = Mathf.InverseLerp(0, blendDist, value);
+                num = Mathf.InverseLerp(0, targetReg.blendDist, value);
             }
-            if (num > 0.99f) CopyRegionDetails(___blendedRegion, lastBlend);
+            if (num > 0.99f) 
+            {
+                CopyRegionDetails(___blendedRegion, lastBlend); 
+            }
             WeatherSet.BlendSets(ref ___blendedRegion.clearWeather, lastBlend.clearWeather, ___currentTargetRegion.clearWeather, num);
             WeatherSet.BlendSets(ref ___blendedRegion.cloudyWeather, lastBlend.cloudyWeather, ___currentTargetRegion.cloudyWeather, num);
             WeatherSet.BlendSets(ref ___blendedRegion.rainWeather, lastBlend.rainWeather, ___currentTargetRegion.rainWeather, num);
@@ -155,14 +159,15 @@ namespace BorderExpander
             //Debug.Log(num);
             return false;
         }
+
         [HarmonyPatch("SwitchRegion")]
         [HarmonyPrefix]
         public static void SwitchRegionPrefix(Region newRegion, Transform ___player, Region ___currentTargetRegion, Region ___blendedRegion)
         {
-            lastRegion = ___currentTargetRegion;
+            lastRegion = ___currentTargetRegion.GetComponent<RegionAddon>();
             //exitDist = Vector3.Distance(___player.position, lastRegion.transform.position);
             //enterDist = Vector3.Distance(___player.position, newRegion.transform.position);
-            blendDist = newRegion.GetComponent<RegionAddon>().blendDist;
+            targetReg = newRegion.GetComponent<RegionAddon>();
 #if DEBUG
             Hints.instance.ShowExternalHint($"Entering {newRegion.gameObject.name} from {lastRegion.gameObject.name}");
 #endif
@@ -202,15 +207,18 @@ namespace BorderExpander
         }
     }
 
+
     public class RegionAddon : MonoBehaviour
     {
         public Region region;
         public float latitude;
         public float blendDist = 2000f;
+        public Collider collider;
 
         public void Awake()
         {
             region = GetComponent<Region>();
+            collider = GetComponent<Collider>() ?? null;
         }
         
         public void OnTriggerEnter(Collider other)
