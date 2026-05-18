@@ -27,6 +27,7 @@ namespace BorderExpander
         internal static ConfigEntry<bool> sunPatch;
         internal static ConfigEntry<bool> sunCompassPatch;
         internal static ConfigEntry<bool> debugFreeSail;
+        internal static ConfigEntry<bool> debugRegionHint;
 
         private void Awake()
         {
@@ -37,6 +38,7 @@ namespace BorderExpander
             sunCompassPatch = Config.Bind("Settings", "Sun Compass Patch", false, new ConfigDescription("sun compass requires manual alignment, so it works south of the equator (requires a restart to take effect)"));
 
             debugFreeSail = Config.Bind("zDebug", "Debug Free Sailing", false, new ConfigDescription("bypass all limits", null, new ConfigurationManagerAttributes { IsAdvanced = true }));
+            debugRegionHint = Config.Bind("zDebug", "Debug Region Hint", false, new ConfigDescription("show notification when changing regions", null, new ConfigurationManagerAttributes { IsAdvanced = true }));
 
             freeSail.SettingChanged += (sender, args) => UpdateLimits();
 

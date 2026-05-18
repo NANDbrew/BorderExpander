@@ -168,9 +168,12 @@ namespace BorderExpander
             //exitDist = Vector3.Distance(___player.position, lastRegion.transform.position);
             //enterDist = Vector3.Distance(___player.position, newRegion.transform.position);
             targetReg = newRegion.GetComponent<RegionAddon>();
-#if DEBUG
-            Hints.instance.ShowExternalHint($"Entering {newRegion.gameObject.name} from {lastRegion.gameObject.name}");
-#endif
+
+            if (Plugin.debugRegionHint.Value)
+            {
+                Hints.instance.ShowExternalHint($"Entering {newRegion.gameObject.name} from {lastRegion.gameObject.name}");
+            }
+
             if (GameState.justStarted)
             {
                 CopyRegionDetails(newRegion, lastBlend);
