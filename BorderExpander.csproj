@@ -85,6 +85,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigurationManagerAttributes.cs" />
+    <Compile Include="FishPickerPatch.cs" />
+    <Compile Include="IslandHorizonPatch.cs" />
     <Compile Include="RegionBlenderPatch.cs" />
     <Compile Include="SunCompassPatch.cs" />
     <Compile Include="SunPatch.cs" />
