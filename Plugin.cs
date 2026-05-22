@@ -26,6 +26,7 @@ namespace BorderExpander
         internal static ConfigEntry<bool> freeSail;
         internal static ConfigEntry<bool> sunPatch;
         internal static ConfigEntry<bool> sunCompassPatch;
+        internal static ConfigEntry<bool> fishPickerPatch;
         internal static ConfigEntry<bool> debugFreeSail;
         internal static ConfigEntry<bool> debugRegionHint;
 
@@ -36,6 +37,7 @@ namespace BorderExpander
             freeSail = Config.Bind("Settings", "Free Sailing", false, new ConfigDescription("Allow sailing anywhere between 70°N and 70°S (allows east/west circumnavigation)"));
             sunPatch = Config.Bind("Settings", "Sun Patch", true, new ConfigDescription("Adjust the sun's behavior around sunrise and sunset. will make sunrise a bit earlier at Aestrin and a bit later at FFL"));
             sunCompassPatch = Config.Bind("Settings", "Sun Compass Patch", false, new ConfigDescription("sun compass requires manual alignment, so it works south of the equator (requires a restart to take effect)"));
+            fishPickerPatch = Config.Bind("Settings", "Fish Picker Patch", false, new ConfigDescription("duplicate fish latitudes in the southern hemisphere"));
 
             debugFreeSail = Config.Bind("zDebug", "Debug Free Sailing", false, new ConfigDescription("bypass all limits", null, new ConfigurationManagerAttributes { IsAdvanced = true }));
             debugRegionHint = Config.Bind("zDebug", "Debug Region Hint", false, new ConfigDescription("show notification when changing regions", null, new ConfigurationManagerAttributes { IsAdvanced = true }));
