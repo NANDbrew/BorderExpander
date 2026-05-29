@@ -1,7 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
-using System;
 using System.Collections;
 using System.Reflection;
 using UnityEngine;
@@ -30,9 +29,12 @@ namespace BorderExpander
         internal static ConfigEntry<bool> debugFreeSail;
         internal static ConfigEntry<bool> debugRegionHint;
 
+        public static Plugin instance;
+
         private void Awake()
         {
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PLUGIN_ID);
+            instance = this;
 
             freeSail = Config.Bind("Settings", "Free Sailing", false, new ConfigDescription("Allow sailing anywhere between 70°N and 70°S (allows east/west circumnavigation)"));
             sunPatch = Config.Bind("Settings", "Sun Patch", true, new ConfigDescription("Adjust the sun's behavior around sunrise and sunset. will make sunrise a bit earlier at Aestrin and a bit later at FFL"));

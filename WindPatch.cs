@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HarmonyLib;
+﻿using HarmonyLib;
 using UnityEngine;
 
 namespace BorderExpander
@@ -13,42 +8,6 @@ namespace BorderExpander
     {
         static Wind wind;
         static float defaultMinMagnitude;
-        static TradeWindRegion northern = new TradeWindRegion 
-        { 
-            name = "northern",
-            limits = Rect.MinMaxRect(-200f, 33f, 200f, 90f),
-            direction = new Vector3(1f, 0f, 0.5f), 
-            influence = 0.25f 
-        };
-        static TradeWindRegion alankh = new TradeWindRegion 
-        { 
-            name = "al'ankh",
-            limits = Rect.MinMaxRect(-200, 30f, -2f, 33f), 
-            direction = new Vector3(0.75f, 0f, 0.75f), 
-            influence = 0.25f 
-        };
-        static TradeWindRegion emerald = new TradeWindRegion 
-        { 
-            name = "emerald",
-            limits = Rect.MinMaxRect(-2f, 30f, 200f, 32f), 
-            direction = new Vector3(-1f, 0f, -0.5f), 
-            influence = 0.25f 
-        };
-
-        static TradeWindRegion southernEasterlies = new TradeWindRegion
-        {
-            name = "southern easterlies",
-            limits = Rect.MinMaxRect(-200, -30f, 200, 15),
-            direction = new Vector3(-1f, 0f, 0.5f),
-            influence = 0.25f
-        };
-        static TradeWindRegion southernWesterlies = new TradeWindRegion
-        {
-            name = "southern westerlies",
-            limits = Rect.MinMaxRect(-200, -60, 200, -33),
-            direction = new Vector3(1f, 0f, -0.5f),
-            influence = 0.25f
-        };
 
         [HarmonyPatch("Awake")]
         [HarmonyPostfix]
@@ -57,12 +16,11 @@ namespace BorderExpander
             wind = __instance;
             TradeWinds.defaultTradeWindInfluence = ___tradeWindInfluence;
             defaultMinMagnitude = ___minimumMagnitude;
-            TradeWinds.AddRegion(northern);
-            TradeWinds.AddRegion(alankh);
-            TradeWinds.AddRegion(emerald);
-            TradeWinds.AddRegion(southernEasterlies);
-            TradeWinds.AddRegion(southernWesterlies);
+
+            TradeWinds.ReadDefs();
+            TradeWinds.SortRegions();
         }
+
 
         [HarmonyPatch("GetCurrentTradeWind")]
         [HarmonyPrefix]
@@ -73,7 +31,7 @@ namespace BorderExpander
             if (region.name != "none")
             {
                 ___tradeWindInfluence = region.influence;
-                __result = region.direction.normalized;
+                __result = new Vector3(region.dirX, 0, region.dirY).normalized;
             }
             else
             {
