@@ -5,11 +5,11 @@ namespace BorderExpander
     [HarmonyPatch(typeof(IslandHorizon), "SetHeight")]
     internal static class IslandHorizonPatch
     {
-        private static void Prefix(ref float y)
+        private static void Prefix(ref float y, float ___sunkHeight)
         {
-            if (y < -1000)
+            if (y < ___sunkHeight)
             {
-                y = -1000;
+                y = ___sunkHeight;
             }
         }
     }
