@@ -3,14 +3,11 @@ using UnityEngine;
 
 namespace BorderExpander
 {
-    [HarmonyPatch(typeof(Wind))]
     public static class WindPatch
     {
         static Wind wind;
         static float defaultMinMagnitude;
 
-        [HarmonyPatch("Awake")]
-        [HarmonyPostfix]
         public static void AwakePatch(Wind __instance, float ___tradeWindInfluence, float ___minimumMagnitude)
         {
             wind = __instance;
@@ -21,9 +18,6 @@ namespace BorderExpander
             TradeWinds.SortRegions();
         }
 
-
-        [HarmonyPatch("GetCurrentTradeWind")]
-        [HarmonyPrefix]
         public static bool GetTradeWindPatch(ref Vector3 __result, ref float ___tradeWindInfluence, ref float ___minimumMagnitude)
         {
             var region = TradeWinds.GetCurrentTradeWindRegion();
@@ -61,8 +55,7 @@ namespace BorderExpander
                     break;
                 }
             }
-
-            //Debug.Log($"Wind magnitudes: min = {min}, max = {max}, avg = {sum / iterations}");
+            Debug.Log($"Wind magnitudes: min = {min}, max = {max}, avg = {sum / iterations}");
         }
     }
 
