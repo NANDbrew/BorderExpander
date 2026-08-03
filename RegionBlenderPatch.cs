@@ -100,13 +100,12 @@ namespace BorderExpander
         [HarmonyPrefix]
         public static bool BlendPatch(Transform ___player, Region ___currentTargetRegion, ref Region ___blendedRegion)
         {
-            if (GameState.justStarted || GameState.currentlyLoading)
+            if (GameState.justStarted || GameState.currentlyLoading || targetReg == null)
             {
                 CopyRegionDetails(___blendedRegion, lastBlend);
                 return true;
             }
 
-            float num;
             float value;
             if (regionByLat)
             {
@@ -114,14 +113,14 @@ namespace BorderExpander
                 {
 
                     value = Vector3.Distance(___player.position, lastRegion.collider.ClosestPoint(___player.transform.position));
-                    num = Mathf.InverseLerp(0, targetReg.blendDist, value);
-                    if (num > 0.99f) switchingToLat = false;
+                    lerp = Mathf.InverseLerp(0, targetReg.blendDist, value);
+                    if (lerp > 0.99f) switchingToLat = false;
                 }
                 else
                 {
                     switchingToLat = false;
                     value = Mathf.Abs(Mathf.Abs(___currentTargetRegion.GetComponent<RegionAddon>().latitude - FloatingOriginManager.instance.GetGlobeCoords(___player).z));
-                    num = Mathf.InverseLerp(10, 9.5f, value);
+                    lerp = Mathf.InverseLerp(10, 9.5f, value);
                 }
 
             }
@@ -130,28 +129,27 @@ namespace BorderExpander
                 // crazy bs to make collider distance work from inside. Why can't my distance function be signed?
                 Physics.ComputePenetration(___player.GetComponent<Collider>(), ___player.position, ___player.rotation, targetReg.GetComponent<Collider>(), ___currentTargetRegion.transform.position, ___currentTargetRegion.transform.rotation, out Vector3 dir, out value);
                 switchingToLat = false;
-                num = Mathf.InverseLerp(0, targetReg.blendDist, value);
+                lerp = Mathf.InverseLerp(0, targetReg.blendDist, value);
             }
-            if (num > 0.99f) 
+            if (lerp > 0.99f) 
             {
                 CopyRegionDetails(___blendedRegion, lastBlend); 
             }
-            WeatherSet.BlendSets(ref ___blendedRegion.clearWeather, lastBlend.clearWeather, ___currentTargetRegion.clearWeather, num);
-            WeatherSet.BlendSets(ref ___blendedRegion.cloudyWeather, lastBlend.cloudyWeather, ___currentTargetRegion.cloudyWeather, num);
-            WeatherSet.BlendSets(ref ___blendedRegion.rainWeather, lastBlend.rainWeather, ___currentTargetRegion.rainWeather, num);
-            WeatherSet.BlendSets(ref ___blendedRegion.stormWeather, lastBlend.stormWeather, ___currentTargetRegion.stormWeather, num);
-            ___blendedRegion.stormRange = Mathf.Lerp(lastBlend.stormRange, ___currentTargetRegion.stormRange, num);
-            ___blendedRegion.windChaos = Mathf.Lerp(lastBlend.windChaos, ___currentTargetRegion.windChaos, num);
-            ___blendedRegion.windDirChaos = Mathf.Lerp(lastBlend.windDirChaos, ___currentTargetRegion.windDirChaos, num);
-            ___blendedRegion.stormCount = Mathf.RoundToInt(Mathf.Lerp(lastBlend.stormCount, ___currentTargetRegion.stormCount, num));
-            lerp = num;
-            //Debug.Log(num);
+            WeatherSet.BlendSets(ref ___blendedRegion.clearWeather, lastBlend.clearWeather, ___currentTargetRegion.clearWeather, lerp);
+            WeatherSet.BlendSets(ref ___blendedRegion.cloudyWeather, lastBlend.cloudyWeather, ___currentTargetRegion.cloudyWeather, lerp);
+            WeatherSet.BlendSets(ref ___blendedRegion.rainWeather, lastBlend.rainWeather, ___currentTargetRegion.rainWeather, lerp);
+            WeatherSet.BlendSets(ref ___blendedRegion.stormWeather, lastBlend.stormWeather, ___currentTargetRegion.stormWeather, lerp);
+            ___blendedRegion.stormRange = Mathf.Lerp(lastBlend.stormRange, ___currentTargetRegion.stormRange, lerp);
+            ___blendedRegion.windChaos = Mathf.Lerp(lastBlend.windChaos, ___currentTargetRegion.windChaos, lerp);
+            ___blendedRegion.windDirChaos = Mathf.Lerp(lastBlend.windDirChaos, ___currentTargetRegion.windDirChaos, lerp);
+            ___blendedRegion.stormCount = Mathf.RoundToInt(Mathf.Lerp(lastBlend.stormCount, ___currentTargetRegion.stormCount, lerp));
+
             return false;
         }
 
         [HarmonyPatch("SwitchRegion")]
         [HarmonyPrefix]
-        public static void SwitchRegionPrefix(Region newRegion, Transform ___player, Region ___currentTargetRegion, Region ___blendedRegion)
+        public static void SwitchRegionPrefix(Region newRegion, Region ___currentTargetRegion, Region ___blendedRegion)
         {
             lastRegion = ___currentTargetRegion.GetComponent<RegionAddon>();
             targetReg = newRegion.GetComponent<RegionAddon>();
