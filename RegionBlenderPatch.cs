@@ -48,7 +48,7 @@ namespace BorderExpander
             }
             foreach (var region in GameObject.FindObjectsOfType<Region>())
             {
-                if (region.GetComponent<RegionAddon>() == null) region.gameObject.AddComponent<RegionAddon>();
+                var addOn = region.GetComponent<RegionAddon>() ?? region.gameObject.AddComponent<RegionAddon>();
                 Debug.Log("did we add addon?");
                 if (region.portRegion == PortRegion.alankh)
                 {
@@ -58,14 +58,13 @@ namespace BorderExpander
                 }
                 else if (region.portRegion == PortRegion.medi && region.gameObject.name.Contains("East"))
                 {
-                    region.GetComponent<RegionAddon>().blendDist = 2500;
+                    addOn.blendDist = 2500;
                     // using chronos for higher latitudes
                     CopyRegionDetails(region, latitudeRegions[2].region);
                 }
                 else if (region.portRegion == PortRegion.emerald && region.gameObject.name.Contains("Lagoon"))
                 {
-                    region.GetComponent<RegionAddon>().blendDist = 1000;
-                    //CopyRegionDetails(region, latitudeRegions[0].region);
+                    addOn.blendDist = 1000;
                 }
             }
         }
@@ -101,15 +100,9 @@ namespace BorderExpander
         [HarmonyPrefix]
         public static bool BlendPatch(Transform ___player, Region ___currentTargetRegion, ref Region ___blendedRegion)
         {
-/*            if (GameState.justStarted && !initialized)
-            {
-                RegionBlender.instance.StartCoroutine(WaitForBlend());
-                initialized = true;
-            }*/
             if (GameState.justStarted || GameState.currentlyLoading)
             {
                 CopyRegionDetails(___blendedRegion, lastBlend);
-                //initialBlend = true;
                 return true;
             }
 
@@ -117,7 +110,6 @@ namespace BorderExpander
             float value;
             if (regionByLat)
             {
-                //float num;
                 if (switchingToLat && lastRegion.collider != null)
                 {
 
@@ -131,16 +123,13 @@ namespace BorderExpander
                     value = Mathf.Abs(Mathf.Abs(___currentTargetRegion.GetComponent<RegionAddon>().latitude - FloatingOriginManager.instance.GetGlobeCoords(___player).z));
                     num = Mathf.InverseLerp(10, 9.5f, value);
                 }
-                //Debug.Log(num);
-                //return false;
+
             }
             else
             {
                 // crazy bs to make collider distance work from inside. Why can't my distance function be signed?
                 Physics.ComputePenetration(___player.GetComponent<Collider>(), ___player.position, ___player.rotation, targetReg.GetComponent<Collider>(), ___currentTargetRegion.transform.position, ___currentTargetRegion.transform.rotation, out Vector3 dir, out value);
                 switchingToLat = false;
-                //value = Vector3.Distance(___player.position, ___currentTargetRegion.transform.position);
-                //value = Vector3.Distance(___player.position, ___currentTargetRegion.GetComponent<Collider>().ClosestPoint(___player.transform.position));
                 num = Mathf.InverseLerp(0, targetReg.blendDist, value);
             }
             if (num > 0.99f) 
@@ -165,8 +154,6 @@ namespace BorderExpander
         public static void SwitchRegionPrefix(Region newRegion, Transform ___player, Region ___currentTargetRegion, Region ___blendedRegion)
         {
             lastRegion = ___currentTargetRegion.GetComponent<RegionAddon>();
-            //exitDist = Vector3.Distance(___player.position, lastRegion.transform.position);
-            //enterDist = Vector3.Distance(___player.position, newRegion.transform.position);
             targetReg = newRegion.GetComponent<RegionAddon>();
 
             if (Plugin.debugRegionHint.Value)
@@ -238,7 +225,6 @@ namespace BorderExpander
             {
                 RegionBlenderPatch.switchingToLat = true;
                 RegionBlenderPatch.regionByLat = true;
-                //RegionBlenderPatch.lastRegion = region;
                 RegionBlender.instance.SwitchRegion(RegionBlenderPatch.GetLatitudeRegion(other.transform));
             }
         }
