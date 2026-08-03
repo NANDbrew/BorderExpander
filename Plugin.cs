@@ -12,7 +12,7 @@ namespace BorderExpander
     {
         public const string PLUGIN_ID = "com.nandbrew.borderexpander";
         public const string PLUGIN_NAME = "Border Expander";
-        public const string PLUGIN_VERSION = "0.5.0";
+        public const string PLUGIN_VERSION = "0.6.0";
 
         public static float northLimit = 46f;
         public static float southLimit = 26f;
