@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using Crest;
+using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -97,8 +98,62 @@ namespace BorderExpander
             #endregion
             return false;
         }
+        private static Vector3[] PrepareBoat(PurchasableBoat boat, Vector3 referencePos)
+        {
+            BoatMooringRopes ropes = boat.GetComponent<BoatMooringRopes>();
+            Vector3 anchorPos = Vector3.zero;
+            if (ropes.GetAnchorController()?.joint.gameObject is GameObject anchor)
+            {
+                anchorPos = anchor.transform.position - boat.transform.position;
+            }
+            boat.GetComponent<BoatProbes>().dontUpdateVelocity = true;
+            Debug.Log("BE: prepared boat: " + boat.name);
+            return new Vector3[] { boat.transform.position - referencePos, anchorPos };
+        }
+
+        private static void MoveBoat(PurchasableBoat boat, Vector3 targetPos, Vector3 anchorPos, Vector3 referencePos)
+        {
+            boat.transform.position = targetPos + referencePos;
+            BoatMooringRopes ropes = boat.GetComponent<BoatMooringRopes>();
+            if (ropes.GetAnchorController()?.joint.gameObject is GameObject anchor)
+            {
+                anchor.transform.position = anchorPos + boat.transform.position;
+                anchor.GetComponent<Rigidbody>().velocity = boat.GetComponent<Rigidbody>().velocity;
+            }
+            boat.GetComponent<BoatProbes>().dontUpdateVelocity = false;
+            Debug.Log("BE: moved boat: " + boat.name);
+        }
 
         public static IEnumerator MoveBoatToPos(Transform boat, Vector3 targetPos)
+        {
+            var pos = PrepareBoat(boat.GetComponent<PurchasableBoat>(), Vector3.zero);
+
+            PurchasableBoat[] nearbyBoats = GameObject.FindObjectsOfType<PurchasableBoat>().Where(o => (o.transform != boat && o.isPurchased() && (o.transform.position - boat.position).sqrMagnitude < 100000)).ToArray();
+            var relVectors = new Vector3[nearbyBoats.Length][];
+            for (int i = 0; i < nearbyBoats.Length; i++)
+            {
+                relVectors[i] = PrepareBoat(nearbyBoats[i], pos[0]); 
+            }
+            targetPos = FloatingOriginManager.instance.RealPosToShiftingPos(targetPos);
+            
+            GameState.recovering = true;
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            MoveBoat(boat.GetComponent<PurchasableBoat>(), targetPos, pos[1], Vector3.zero);
+
+            for (int i = 0; i < nearbyBoats.Length; i++)
+            {
+                MoveBoat(nearbyBoats[i], relVectors[i][0], relVectors[i][1], targetPos);
+            }
+
+            yield return new WaitForSeconds(1f);
+
+            GameState.recovering = false;
+
+        }
+/*
+        public static IEnumerator MoveBoatToPosa(Transform boat, Vector3 targetPos)
         {
             GameState.recovering = true;
             BoatMooringRopes ropes = boat.GetComponent<BoatMooringRopes>();
@@ -126,7 +181,7 @@ namespace BorderExpander
 
             GameState.recovering = false;
 
-        }
+        }*/
     }
 }
 
