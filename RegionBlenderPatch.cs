@@ -126,8 +126,15 @@ namespace BorderExpander
             }
             else
             {
-                // crazy bs to make collider distance work from inside. Why can't my distance function be signed?
-                Physics.ComputePenetration(___player.GetComponent<Collider>(), ___player.position, ___player.rotation, targetReg.GetComponent<Collider>(), ___currentTargetRegion.transform.position, ___currentTargetRegion.transform.rotation, out Vector3 dir, out value);
+                if (targetReg.collider is SphereCollider sCol)
+                {
+                    value = -(Vector3.Distance(___player.position, targetReg.transform.position) - sCol.radius);
+                }
+                else
+                {
+                    // crazy bs to make collider distance work from inside. Why can't my distance function be signed?
+                    Physics.ComputePenetration(___player.GetComponent<Collider>(), ___player.position, ___player.rotation, targetReg.collider, ___currentTargetRegion.transform.position, ___currentTargetRegion.transform.rotation, out Vector3 dir, out value);
+                }
                 switchingToLat = false;
                 lerp = Mathf.InverseLerp(0, targetReg.blendDist, value);
             }
@@ -213,6 +220,10 @@ namespace BorderExpander
         {
             if (other.CompareTag("Player"))
             {
+                if (collider == null)
+                {
+                    collider = GetComponent<Collider>();
+                }
                 RegionBlenderPatch.regionByLat = false;
             }
         }
@@ -221,6 +232,10 @@ namespace BorderExpander
         {
             if (other.CompareTag("Player") && RegionBlender.instance != null && ReferenceEquals((Region)AccessTools.Field(typeof(RegionBlender), "currentTargetRegion").GetValue(RegionBlender.instance), region))
             {
+                if (collider == null)
+                {
+                    collider = GetComponent<Collider>();
+                }
                 RegionBlenderPatch.switchingToLat = true;
                 RegionBlenderPatch.regionByLat = true;
                 RegionBlender.instance.SwitchRegion(RegionBlenderPatch.GetLatitudeRegion(other.transform));
