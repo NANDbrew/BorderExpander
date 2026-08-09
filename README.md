@@ -7,7 +7,7 @@
 - Makes the border friendlier by displaying a non-blocking notification the border and waking sleeping players outside the border. (technically the notification appears at the border and recovery happens 1° past)
 - Support for custom trade wind regions, either from other mods or in `tradewinds.json`
 - Adds trade winds in the southern hemisphere (only matters if free sailing is enabled)
-- Trade wind changes are disabled if [SailwindClimate](https://github.com/bryon82/SailwindClimate) is installed
+~~- Trade wind changes are disabled if [SailwindClimate](https://github.com/bryon82/SailwindClimate) is installed~~
 
 ## Modder info
 - Overrides the vanilla trade wind influence per-region, so you can make your custom regions more or less consistent than vanilla
