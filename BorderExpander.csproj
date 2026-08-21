@@ -98,6 +98,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BoatMover.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="FishPickerPatch.cs" />
     <Compile Include="IslandHorizonPatch.cs" />

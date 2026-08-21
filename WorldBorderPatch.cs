@@ -1,13 +1,8 @@
 ﻿using Crest;
 using HarmonyLib;
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace BorderExpander
 {
@@ -86,14 +81,36 @@ namespace BorderExpander
             #region circumnavigation
             if (GameState.justWokeUp && (___currentGlobePos.x > 180 || ___currentGlobePos.x < -180))
             {
-                Debug.Log("Transposing Boat");
+                //Debug.Log("Transposing Boat");
                 float sub = 180 * 9000;
                 Vector3 currentPos = FloatingOriginManager.instance.ShiftingPosToRealPos(GameState.lastBoat.transform.position);
                 float transpose = -sub + (currentPos.x - sub);
                 if (___currentGlobePos.x < 0) transpose = sub + (currentPos.x + sub);
 
                 Vector3 targetPos = new Vector3(transpose, currentPos.y, currentPos.z);
-                __instance.StartCoroutine(MoveBoatToPos(GameState.lastBoat, targetPos));
+                //__instance.StartCoroutine(MoveBoatToPos(GameState.lastBoat, targetPos));
+                var boat = GameState.lastBoat;
+                PurchasableBoat[] nearbyBoats = new PurchasableBoat[0];
+                Vector3[] relVectors = new Vector3[0];
+
+                nearbyBoats = GameObject.FindObjectsOfType<PurchasableBoat>().Where(o => (o.transform != boat && o.isPurchased() && (o.transform.position - boat.position).sqrMagnitude < 10000)).ToArray();
+                relVectors = new Vector3[nearbyBoats.Length];
+                for (int i = 0; i < nearbyBoats.Length; i++)
+                {
+                    relVectors[i] = nearbyBoats[i].transform.position - GameState.lastBoat.position;
+                }
+
+                FloatingOriginManager.instance.StartCoroutine(BoatMover.IMoveBoat(targetPos, boat.rotation, boat));
+
+                if (nearbyBoats.Length > 0 && relVectors.Length > 0)
+                {
+                    for (int j = 0; j < nearbyBoats.Length; j++)
+                    {
+                        Transform nb = nearbyBoats[j].transform;
+                        FloatingOriginManager.instance.StartCoroutine(BoatMover.IMoveBoat(targetPos + relVectors[j], nb.transform.rotation, nb));
+
+                    }
+                }
             }
             #endregion
             return false;
@@ -152,36 +169,37 @@ namespace BorderExpander
             GameState.recovering = false;
 
         }
-/*
-        public static IEnumerator MoveBoatToPosa(Transform boat, Vector3 targetPos)
-        {
-            GameState.recovering = true;
-            BoatMooringRopes ropes = boat.GetComponent<BoatMooringRopes>();
-            //ropes.UnmoorAllRopes();
-            ropes.GetAnchorController().ResetAnchor();
-            Vector3[] relVectors = new Vector3[0];
-            PurchasableBoat[] nearbyBoats = GameObject.FindObjectsOfType<PurchasableBoat>().Where(o => (o.transform != boat && o.isPurchased() && (o.transform.position - boat.position).sqrMagnitude < 100000)).ToArray();
-            relVectors = new Vector3[nearbyBoats.Length];
-            for (int i = 0; i < nearbyBoats.Length; i++)
-            {
-                var nearBoat = nearbyBoats[i];
-                var nearBoatRopes = nearBoat.GetComponent<BoatMooringRopes>();
-                nearBoatRopes.GetAnchorController().ResetAnchor();
 
-                relVectors[i] = nearBoat.transform.position - boat.position;
-            }
-            boat.position = FloatingOriginManager.instance.RealPosToShiftingPos(targetPos);
+        /*
+                public static IEnumerator MoveBoatToPosa(Transform boat, Vector3 targetPos)
+                {
+                    GameState.recovering = true;
+                    BoatMooringRopes ropes = boat.GetComponent<BoatMooringRopes>();
+                    //ropes.UnmoorAllRopes();
+                    ropes.GetAnchorController().ResetAnchor();
+                    Vector3[] relVectors = new Vector3[0];
+                    PurchasableBoat[] nearbyBoats = GameObject.FindObjectsOfType<PurchasableBoat>().Where(o => (o.transform != boat && o.isPurchased() && (o.transform.position - boat.position).sqrMagnitude < 100000)).ToArray();
+                    relVectors = new Vector3[nearbyBoats.Length];
+                    for (int i = 0; i < nearbyBoats.Length; i++)
+                    {
+                        var nearBoat = nearbyBoats[i];
+                        var nearBoatRopes = nearBoat.GetComponent<BoatMooringRopes>();
+                        nearBoatRopes.GetAnchorController().ResetAnchor();
 
-            for (int i = 0; i < nearbyBoats.Length; i++)
-            {
-                nearbyBoats[i].transform.position = relVectors[i] + boat.position;
-            }
-        
-            yield return new WaitForSeconds(1f);
+                        relVectors[i] = nearBoat.transform.position - boat.position;
+                    }
+                    boat.position = FloatingOriginManager.instance.RealPosToShiftingPos(targetPos);
 
-            GameState.recovering = false;
+                    for (int i = 0; i < nearbyBoats.Length; i++)
+                    {
+                        nearbyBoats[i].transform.position = relVectors[i] + boat.position;
+                    }
 
-        }*/
+                    yield return new WaitForSeconds(1f);
+
+                    GameState.recovering = false;
+
+                }*/
     }
 }
 

@@ -5,7 +5,6 @@ using HarmonyLib;
 using System.Collections;
 using System.Reflection;
 using UnityEngine;
-using Climate;
 
 namespace BorderExpander
 {
@@ -153,14 +152,15 @@ namespace BorderExpander
         }
     }
 
-/*    [HarmonyPatch(typeof(SaveLoadManager), "LoadModData")]
+    [HarmonyPatch(typeof(SaveLoadManager), "LoadModData")]
     static class SaveLoadManagerPatch
     {
         [HarmonyPriority(Priority.VeryHigh)]
         private static void Prefix()
         {
+            Plugin.scrambledSeas = GameState.modData.ContainsKey("ScrambledSeas");
             Plugin.UpdateLimits();
             Plugin.initialized = true;
         }
-    }*/
+    }
 }
