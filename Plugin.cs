@@ -16,7 +16,7 @@ namespace BorderExpander
     {
         public const string PLUGIN_ID = "com.nandbrew.borderexpander";
         public const string PLUGIN_NAME = "Border Expander";
-        public const string PLUGIN_VERSION = "0.6.0";
+        public const string PLUGIN_VERSION = "0.6.1";
 
 /*        internal static bool climateInstalled;*/
         internal static bool scrambledSeas;
