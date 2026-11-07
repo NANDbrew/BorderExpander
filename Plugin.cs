@@ -102,7 +102,36 @@ namespace BorderExpander
                 if (loc.x + padding > eastLimit) eastLimit = Mathf.Round(loc.x + padding);
                 if (loc.x - padding < westLimit) westLimit = Mathf.Round(loc.x - padding);
             }
+/*            
+            if (climateInstalled)
+            {
+                UpdateClimate();
+            public static void UpdateClimate()
+            {
+                Climate_Plugin.MinWindLatitude = Mathf.FloorToInt(southLimit - 2);
+                Climate_Plugin.MaxWindLatitude = Mathf.CeilToInt(northLimit + 2);
+            
+                Climate_Plugin.MinWindLongitude = Mathf.FloorToInt(westLimit - 2);
+                Climate_Plugin.MaxWindLongitude = Mathf.CeilToInt(eastLimit + 2);
 
+                Climate_Plugin.MinCellSpawnLatitude = Mathf.RoundToInt(southLimit + 4);
+                Climate_Plugin.MaxCellSpawnLatitude = Mathf.RoundToInt(northLimit - 4);
+
+                Climate_Plugin.MinCellSpawnLongitude = Mathf.RoundToInt(westLimit + 6);
+                Climate_Plugin.MaxCellSpawnLongitude = Mathf.RoundToInt(eastLimit - 10);
+
+                float currentArea = (northLimit - southLimit) * (eastLimit + Mathf.Abs(westLimit));
+
+                Climate_Plugin.MaxPressureCells = Mathf.FloorToInt(6 * (currentArea / 880));
+                //Climate.WindService.UpdateDailyWindField();
+                Debug.Log("BE: max pressure cells = " + Climate_Plugin.MaxPressureCells);
+            }
+
+                }
+            }
+                UpdateClimate();
+            }
+*/
         }
 
         private IEnumerator InitializeLimits()
