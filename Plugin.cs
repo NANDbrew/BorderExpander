@@ -10,7 +10,7 @@ namespace BorderExpander
 {
     [BepInPlugin(PLUGIN_ID, PLUGIN_NAME, PLUGIN_VERSION)]
 /*    [BepInDependency("com.raddude.climate", BepInDependency.DependencyFlags.SoftDependency)]*/
-    [BepInDependency("com.nandbrew.scrambledseas", BepInDependency.DependencyFlags.SoftDependency)]
+    //[BepInDependency("com.nandbrew.scrambledseas", BepInDependency.DependencyFlags.SoftDependency)]
 
     public class Plugin : BaseUnityPlugin
     {
@@ -35,6 +35,7 @@ namespace BorderExpander
         internal static ConfigEntry<bool> fishPickerPatch;
         internal static ConfigEntry<bool> debugFreeSail;
         internal static ConfigEntry<bool> debugRegionHint;
+        internal static ConfigEntry<bool> perfBoost;
 
         public static Plugin instance;
         private static Harmony harmony;
@@ -66,13 +67,15 @@ namespace BorderExpander
             {
                 scrambledSeas = true;
             }
-            
+
             freeSail = Config.Bind("Settings", "Free Sailing", false, new ConfigDescription("Allow sailing anywhere between 70°N and 70°S (allows east/west circumnavigation)"));
             sunPatch = Config.Bind("Settings", "Sun Patch", true, new ConfigDescription("Adjust the sun to account for latitude. will make sunrise a bit earlier at Aestrin and a bit later at FFL"));
             sunCompassPatch = Config.Bind("Settings", "Sun Compass Patch", false, new ConfigDescription("Sun compass requires manual alignment, so it works south of the equator (requires a restart to take effect)"));
             fishPickerPatch = Config.Bind("Settings", "Fish Picker Patch", false, new ConfigDescription("Duplicate fish latitudes in the southern hemisphere"));
             debugFreeSail = Config.Bind("zDebug", "Debug Free Sailing", false, new ConfigDescription("Bypass all limits", null, new ConfigurationManagerAttributes { IsAdvanced = true }));
             debugRegionHint = Config.Bind("zDebug", "Debug Region Hint", false, new ConfigDescription("Show notification when changing regions", null, new ConfigurationManagerAttributes { IsAdvanced = true }));
+            perfBoost = Config.Bind("zDebug", "Performance boost", true, new ConfigDescription("Reduce the frequency of region blend updates and skip them altogether when already blended to one region"));
+            
             freeSail.SettingChanged += (sender, args) => UpdateLimits();
 
             StartCoroutine(InitializeLimits());

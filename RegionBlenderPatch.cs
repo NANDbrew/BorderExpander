@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
@@ -20,6 +21,12 @@ namespace BorderExpander
         public static RegionAddon[] latitudeRegions;
         public static RegionAddon targetReg;
         private static float lerp;
+        static bool blending;
+        static bool blend = true;
+
+        // seconds between updates
+        static float interval = 0.05f;
+        static float timer;
 
         [HarmonyPatch("Start")]
         [HarmonyPostfix]
@@ -81,10 +88,25 @@ namespace BorderExpander
             targetRegion.stormCount = initialRegion.stormCount;
         }
 
-        [HarmonyPatch("Update")]
-        [HarmonyPostfix]
-        public static void UpdatePatch(Transform ___player, Region ___currentTargetRegion)
+        [HarmonyPatch("UpdateBlend")]
+        [HarmonyPrefix]
+        public static bool BlendPatch(Transform ___player, Region ___currentTargetRegion, ref Region ___blendedRegion)
         {
+            if (!blend) return true;
+            if (GameState.justStarted || GameState.currentlyLoading || targetReg == null)
+            {
+                CopyRegionDetails(___blendedRegion, lastBlend);
+                return true;
+            }
+            if (Plugin.perfBoost.Value)
+            {
+                timer += Time.deltaTime;
+                if (timer < interval)
+                {
+                    return false;
+                }
+                timer = 0f;
+            }
             if (___currentTargetRegion.portRegion == PortRegion.none)
             {
                 var latitudeRegion = GetLatitudeRegion(___player);
@@ -92,18 +114,6 @@ namespace BorderExpander
                 {
                     RegionBlender.instance.SwitchRegion(latitudeRegion);
                 }
-            }
-
-        }
-
-        [HarmonyPatch("UpdateBlend")]
-        [HarmonyPrefix]
-        public static bool BlendPatch(Transform ___player, Region ___currentTargetRegion, ref Region ___blendedRegion)
-        {
-            if (GameState.justStarted || GameState.currentlyLoading || targetReg == null)
-            {
-                CopyRegionDetails(___blendedRegion, lastBlend);
-                return true;
             }
 
             float value;
@@ -138,10 +148,21 @@ namespace BorderExpander
                 switchingToLat = false;
                 lerp = Mathf.InverseLerp(0, targetReg.blendDist, value);
             }
-            if (lerp > 0.99f) 
+            if (lerp > 0.99f)
             {
-                CopyRegionDetails(___blendedRegion, lastBlend); 
+                if (blending)
+                {
+                    CopyRegionDetails(___blendedRegion, lastBlend);
+                    blending = false;
+                }
+
+                if (Plugin.perfBoost.Value) return false;
             }
+            else
+            {
+                blending = true;
+            }
+
             WeatherSet.BlendSets(ref ___blendedRegion.clearWeather, lastBlend.clearWeather, ___currentTargetRegion.clearWeather, lerp);
             WeatherSet.BlendSets(ref ___blendedRegion.cloudyWeather, lastBlend.cloudyWeather, ___currentTargetRegion.cloudyWeather, lerp);
             WeatherSet.BlendSets(ref ___blendedRegion.rainWeather, lastBlend.rainWeather, ___currentTargetRegion.rainWeather, lerp);
@@ -150,6 +171,10 @@ namespace BorderExpander
             ___blendedRegion.windChaos = Mathf.Lerp(lastBlend.windChaos, ___currentTargetRegion.windChaos, lerp);
             ___blendedRegion.windDirChaos = Mathf.Lerp(lastBlend.windDirChaos, ___currentTargetRegion.windDirChaos, lerp);
             ___blendedRegion.stormCount = Mathf.RoundToInt(Mathf.Lerp(lastBlend.stormCount, ___currentTargetRegion.stormCount, lerp));
+            ___blendedRegion.clearVolufog = VolufogSet.LerpSets(lastBlend.clearVolufog, ___currentTargetRegion.clearVolufog, lerp);
+            ___blendedRegion.cloudyVolufog = VolufogSet.LerpSets(lastBlend.cloudyVolufog, ___currentTargetRegion.cloudyVolufog, lerp);
+            ___blendedRegion.rainVolufog = VolufogSet.LerpSets(lastBlend.rainVolufog, ___currentTargetRegion.rainVolufog, lerp);
+            ___blendedRegion.stormVolufog = VolufogSet.LerpSets(lastBlend.stormVolufog, ___currentTargetRegion.stormVolufog, lerp);
 
             return false;
         }
