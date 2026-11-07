@@ -18,14 +18,11 @@ namespace BorderExpander
         public const string PLUGIN_NAME = "Border Expander";
         public const string PLUGIN_VERSION = "0.6.1";
 
-/*        internal static bool climateInstalled;*/
-        internal static bool scrambledSeas;
-
         public static float northLimit = 46f;
         public static float southLimit = 26f;
         public static float eastLimit = 32f;
         public static float westLimit = -12f;
-        public static float padding = 3f;
+        public static float padding = 6f;
         internal static bool initialized = false;
 
         //--settings--
@@ -51,21 +48,15 @@ namespace BorderExpander
             MethodInfo original2 = AccessTools.Method(typeof(Wind), "GetCurrentTradeWind");
             MethodInfo patch2 = AccessTools.Method(typeof(WindPatch), "GetTradeWindPatch");
 
-/*            if (!Chainloader.PluginInfos.ContainsKey("com.raddude.climate"))
+            if (!Chainloader.PluginInfos.ContainsKey("com.raddude.climate"))
             {
-                climateInstalled = false;
                 harmony.Patch(original1, postfix: new HarmonyMethod(patch1));
                 harmony.Patch(original2, prefix: new HarmonyMethod(patch2));
                 Debug.Log("BE: patching trade winds");
             }
             else
             {
-                climateInstalled = true;
                 Debug.Log("BE: Climate mod installed, NOT patching trade winds");
-            }*/
-            if (Chainloader.PluginInfos.ContainsKey("com.nanbrew.scrambledseas"))
-            {
-                scrambledSeas = true;
             }
 
             freeSail = Config.Bind("Settings", "Free Sailing", false, new ConfigDescription("Allow sailing anywhere between 70°N and 70°S (allows east/west circumnavigation)"));
@@ -89,27 +80,18 @@ namespace BorderExpander
             {
                 Debug.Log("defaulting world limits");
 
-                northLimit = 80f;
-                southLimit = -80f;
-                eastLimit = 185f;
-                westLimit = -185f;
+                northLimit = 70f;
+                southLimit = -70;
+                eastLimit = float.PositiveInfinity;
+                westLimit = float.NegativeInfinity;
                 return;
             }
-            if (scrambledSeas) // should probably have check for scramble
-            {
-                northLimit = 37f;
-                southLimit = 35f;
-                eastLimit = 11f;
-                westLimit = 9f;
 
-            }
-            else
-            {
-                northLimit = 46f;
-                southLimit = 26f;
-                eastLimit = 32f;
-                westLimit = -12f;
-            }
+            northLimit = 46f;
+            southLimit = 26f;
+            eastLimit = 32f;
+            westLimit = -12f;
+
             for (int i = 0; i < Refs.islands.Length; i++)
             {
                 var island = Refs.islands[i];
@@ -120,51 +102,16 @@ namespace BorderExpander
                 if (loc.x + padding > eastLimit) eastLimit = Mathf.Round(loc.x + padding);
                 if (loc.x - padding < westLimit) westLimit = Mathf.Round(loc.x - padding);
             }
-/*            if (climateInstalled)
-            {
-                UpdateClimate();
-            }*/
+
         }
-
-/*        public static void UpdateClimate()
-        {
-            Climate_Plugin.MinWindLatitude = Mathf.FloorToInt(southLimit - 2);
-            Climate_Plugin.MaxWindLatitude = Mathf.CeilToInt(northLimit + 2);
-            
-            Climate_Plugin.MinWindLongitude = Mathf.FloorToInt(westLimit - 2);
-            Climate_Plugin.MaxWindLongitude = Mathf.CeilToInt(eastLimit + 2);
-
-            Climate_Plugin.MinCellSpawnLatitude = Mathf.RoundToInt(southLimit + 4);
-            Climate_Plugin.MaxCellSpawnLatitude = Mathf.RoundToInt(northLimit - 4);
-
-            Climate_Plugin.MinCellSpawnLongitude = Mathf.RoundToInt(westLimit + 6);
-            Climate_Plugin.MaxCellSpawnLongitude = Mathf.RoundToInt(eastLimit - 10);
-
-            float currentArea = (northLimit - southLimit) * (eastLimit + Mathf.Abs(westLimit));
-
-            Climate_Plugin.MaxPressureCells = Mathf.FloorToInt(6 * (currentArea / 880));
-            //Climate.WindService.UpdateDailyWindField();
-            Debug.Log("BE: max pressure cells = " + Climate_Plugin.MaxPressureCells);
-        }*/
 
         private IEnumerator InitializeLimits()
         {
-            yield return new WaitUntil(() => GameState.justStarted);
-            if (initialized) yield break;
+            yield return new WaitUntil(() => GameState.playing);
             UpdateLimits();
             initialized = true;
         }
     }
 
-    [HarmonyPatch(typeof(SaveLoadManager), "LoadModData")]
-    static class SaveLoadManagerPatch
-    {
-        [HarmonyPriority(Priority.VeryHigh)]
-        private static void Prefix()
-        {
-            Plugin.scrambledSeas = GameState.modData.ContainsKey("ScrambledSeas");
-            Plugin.UpdateLimits();
-            Plugin.initialized = true;
-        }
-    }
+
 }
