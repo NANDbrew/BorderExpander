@@ -86,6 +86,11 @@ namespace BorderExpander
             targetRegion.windChaos = initialRegion.windChaos;
             targetRegion.windDirChaos = initialRegion.windDirChaos;
             targetRegion.stormCount = initialRegion.stormCount;
+            targetRegion.clearVolufog = initialRegion.clearVolufog;
+            targetRegion.cloudyVolufog = initialRegion.cloudyVolufog;
+            targetRegion.rainVolufog = initialRegion.rainVolufog;
+            targetRegion.stormVolufog = initialRegion.stormVolufog;
+
         }
 
         [HarmonyPatch("UpdateBlend")]
