@@ -176,10 +176,10 @@ namespace BorderExpander
             ___blendedRegion.windChaos = Mathf.Lerp(lastBlend.windChaos, ___currentTargetRegion.windChaos, lerp);
             ___blendedRegion.windDirChaos = Mathf.Lerp(lastBlend.windDirChaos, ___currentTargetRegion.windDirChaos, lerp);
             ___blendedRegion.stormCount = Mathf.RoundToInt(Mathf.Lerp(lastBlend.stormCount, ___currentTargetRegion.stormCount, lerp));
-            ___blendedRegion.clearVolufog = VolufogSet.LerpSets(lastBlend.clearVolufog, ___currentTargetRegion.clearVolufog, lerp);
-            ___blendedRegion.cloudyVolufog = VolufogSet.LerpSets(lastBlend.cloudyVolufog, ___currentTargetRegion.cloudyVolufog, lerp);
-            ___blendedRegion.rainVolufog = VolufogSet.LerpSets(lastBlend.rainVolufog, ___currentTargetRegion.rainVolufog, lerp);
-            ___blendedRegion.stormVolufog = VolufogSet.LerpSets(lastBlend.stormVolufog, ___currentTargetRegion.stormVolufog, lerp);
+            VolufogSet.LerpSets(ref ___blendedRegion.clearVolufog, lastBlend.clearVolufog, ___currentTargetRegion.clearVolufog, lerp);
+            VolufogSet.LerpSets(ref ___blendedRegion.cloudyVolufog, lastBlend.cloudyVolufog, ___currentTargetRegion.cloudyVolufog, lerp);
+            VolufogSet.LerpSets(ref ___blendedRegion.rainVolufog, lastBlend.rainVolufog, ___currentTargetRegion.rainVolufog, lerp);
+            VolufogSet.LerpSets(ref ___blendedRegion.stormVolufog, lastBlend.stormVolufog, ___currentTargetRegion.stormVolufog, lerp);
 
             return false;
         }
